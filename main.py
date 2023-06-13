@@ -44,25 +44,41 @@ plt.ylabel('Lucro Líquido')
 plt.show()
 
 # Previsões de Faturamento para cada empresa
-figs = []
 for empresa, df_empresa in data.groupby('nome'):
-    # Dividir os dados em conjunto de treinamento e conjunto de teste
-    train_data, test_data, train_target, test_target = train_test_split(df_empresa[['data']], df_empresa['faturamento'], test_size=0.2, random_state=1)
+    figs = []
 
-    # Converter as datas para valores numéricos
+    # Boxplot do Lucro Líquido
+    fig, ax = plt.subplots(figsize=(8, 6))
+    sns.boxplot(y='lucro liquido', data=df_empresa)
+    ax.set_title('Distribuição do Lucro Líquido - Empresa: ' + empresa)
+    ax.set_ylabel('Lucro Líquido')
+    figs.append(fig)
+
+    # Histograma do Faturamento
+    fig, ax = plt.subplots(figsize=(8, 6))
+    sns.histplot(df_empresa['faturamento'], bins=10, kde=True)
+    ax.set_title('Histograma do Faturamento - Empresa: ' + empresa)
+    ax.set_xlabel('Faturamento')
+    ax.set_ylabel('Frequência')
+    figs.append(fig)
+
+    # Lucro Líquido ao longo do tempo
+    fig, ax = plt.subplots(figsize=(8, 6))
+    sns.lineplot(x='data', y='lucro liquido', data=df_empresa)
+    ax.set_title('Lucro Líquido ao longo do Tempo - Empresa: ' + empresa)
+    ax.set_xlabel('Data')
+    ax.set_ylabel('Lucro Líquido')
+    ax.set_xticks(ax.get_xticks()[::len(df_empresa['data'])//10])
+    ax.set_xticklabels(ax.get_xticks(), rotation=45)
+    figs.append(fig)
+
+    # Previsões de Faturamento
+    train_data, test_data, train_target, test_target = train_test_split(df_empresa[['data']], df_empresa['faturamento'], test_size=0.2, random_state=1)
     train_data_numeric = train_data['data'].apply(lambda x: x.toordinal())
     test_data_numeric = test_data['data'].apply(lambda x: x.toordinal())
-
-    # Criar o modelo de regressão linear
     model = LinearRegression()
-
-    # Treinar o modelo com os dados de treinamento
     model.fit(train_data_numeric.values.reshape(-1, 1), train_target)
-
-    # Fazer previsões com o modelo usando os dados de teste
     predictions = model.predict(test_data_numeric.values.reshape(-1, 1))
-
-    # Plotar gráfico de linha das previsões de faturamento
     fig, ax = plt.subplots(figsize=(8, 6))
     ax.plot(test_data['data'], test_target, label='Valores Reais')
     ax.plot(test_data['data'], predictions, label='Previsões')
@@ -70,4 +86,9 @@ for empresa, df_empresa in data.groupby('nome'):
     ax.set_ylabel('Faturamento')
     ax.set_title('Previsões de Faturamento - Empresa: ' + empresa)
     ax.legend()
-    figs.append
+    figs.append(fig)
+
+    # Mostrar os gráficos para a empresa atual
+    for fig in figs:
+        fig.tight_layout()
+        plt.show()
